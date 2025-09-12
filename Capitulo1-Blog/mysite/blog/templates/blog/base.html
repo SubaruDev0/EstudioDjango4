@@ -1,18 +1,17 @@
-{% load static %}
+{% load static %} <!-- Carga la etiqueta {% static %} para usar archivos estáticos como CSS o JS -->
 <!DOCTYPE html>
 <html>
 <head>
-  <title>{% block title %}{% endblock %}</title>
-  <link href="{% static "css/blog.css" %}" rel="stylesheet">
+  <title>{% block title %}{% endblock %}</title> <!-- Bloque para título que se define en cada página -->
+  <link href="{% static "css/blog.css" %}" rel="stylesheet"> <!-- Enlace al CSS del blog -->
 </head>
 <body>
   <div id="content">
-    {% block content %}
-    {% endblock %}
+    {% block content %} {% endblock %} <!-- Bloque principal donde se mostrará el contenido específico -->
   </div>
   <div id="sidebar">
     <h2>My blog</h2>
-    <p>This is my blog.</p>
+    <p>This is my blog.</p> <!-- Sidebar estático, puede contener links, info o widgets -->
   </div>
 </body>
 </html>
