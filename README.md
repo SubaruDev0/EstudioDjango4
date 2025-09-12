@@ -7,7 +7,7 @@
   - **Model**: maneja la base de datos.
   - **Template**: define la presentación de los datos.
   - **View**: controla la lógica y la interacción del usuario.
-- Filosofía principal: **DRY (Don't Repeat Yourself)**, máxima reutilización de código y desarrollo rápido gracias a Python.
+- Filosofía principal: **DRY (Don't Repeat Yourself)** → máxima reutilización de código y desarrollo rápido gracias a Python.
 - Características nuevas de Django 4 que se pueden aprovechar:
   - **Caching con Redis**: mejora el rendimiento almacenando datos temporales en memoria.
   - **Scrypt password hasher**: almacenamiento seguro de contraseñas.
@@ -32,7 +32,5 @@ pip install django==4.1.0
 # Verificar versión
 python3 -m django --version
 
-# Instalar dependecias
+# Instalar dependencias desde requirements.txt
 pip install -r requirements.txt
-
-
