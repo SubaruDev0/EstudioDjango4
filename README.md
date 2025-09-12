@@ -31,3 +31,8 @@ pip install django==4.1.0
 
 # Verificar versión
 python3 -m django --version
+
+# Instalar dependecias
+pip install -r requirements.txt
+
+
