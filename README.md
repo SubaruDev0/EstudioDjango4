@@ -1,143 +1,128 @@
-# 📓 Apuntes Django - Proyecto Blog
+# Proyecto Blog - Django 4 (Capítulo 1)
 
-Este documento guarda mis notas del Capítulo 1 del libro *Django 4 by Example*.
-Se centra en setup, arquitectura y estructura inicial del proyecto.
+## Resumen del proyecto y entorno
 
----
+- Este proyecto utiliza **Django 4.x**, un framework web que sigue el patrón **MTV (Model-Template-View)**.
+- Django permite separar claramente las responsabilidades de cada capa:
+  - **Model**: maneja la base de datos.
+  - **Template**: define la presentación de los datos.
+  - **View**: controla la lógica y la interacción del usuario.
+- Filosofía principal: **DRY (Don't Repeat Yourself)**, máxima reutilización de código y desarrollo rápido gracias a Python.
+- Características nuevas de Django 4 que se pueden aprovechar:
+  - **Caching con Redis**: mejora el rendimiento almacenando datos temporales en memoria.
+  - **Scrypt password hasher**: almacenamiento seguro de contraseñas.
+  - **Renderizado de formularios con templates**: permite personalizar la apariencia de los formularios.
+  - **Soporte ASGI y ORM asíncrono**: vistas y consultas asíncronas para aplicaciones con alta concurrencia.
 
-## ✨ Capítulo 1 – Blog
-
-### 🛠️ Setup rápido
-
-* Crear entorno virtual:
-
-  ```bash
-  python3 -m venv venv
-  ```
-* Activar entorno:
-
-  * Linux/Mac → `source venv/bin/activate`
-  * Windows → `venv\Scripts\activate`
-* Instalar Django: `pip install django==4.1.0`
-* Verificar versión: `python3 -m django --version`
-* Instalar dependencias: `pip install -r requirements.txt`
-
----
-
-### 🧩 Arquitectura MTV (Model - Template - View)
-
-* **Model** → maneja la base de datos.
-* **Template** → presentación (HTML, lo que ve el usuario).
-* **View** → lógica que conecta Model con Template.
-* **Controller (implícito)** → Django enruta URLs a Views.
-
-📌 Filosofía Django → **DRY (Don’t Repeat Yourself)**.
-
----
-
-### 🔄 Ciclo petición/respuesta
-
-1. Navegador pide una **URL**.
-2. Django busca en **URL patterns** y ejecuta la **View** correspondiente.
-3. La **View** consulta los **Modelos** si hace falta.
-4. Renderiza un **Template** (HTML) y devuelve **HTTP response**.
-
-* Extra: **Middleware** = código que intercepta/modifica este flujo (ej: seguridad, sesiones).
-
----
-
-### 📂 Estructura del proyecto Django
-
-```
-Capitulo1-Blog/
-  mysite/
-    manage.py        # utilidad CLI, no se edita
-    mysite/
-      __init__.py    # marca el directorio como paquete Python
-      asgi.py        # configuración ASGI (async server)
-      settings.py    # configuración global del proyecto
-      urls.py        # rutas principales
-      wsgi.py        # configuración WSGI (sync server)
-  requirements.txt
-```
-
-* `settings.py` contiene `DATABASES` y `INSTALLED_APPS`.
-* Base de datos por defecto: **SQLite3** (ligera, para desarrollo).
-* Para producción → PostgreSQL / MySQL / Oracle.
-
----
-
-### ⚡ Novedades Django 4 que se pueden aprovechar
-
-* **Caching con Redis**
-* **Scrypt password hasher**
-* **Renderizado de formularios con templates**
-* **Soporte ASGI y ORM asíncrono**
-
----
-
-### ✅ Migraciones iniciales
-
-* Aplicar tablas de apps por defecto (admin, auth, sessions, etc.):
+## Setup rápido (recordatorio)
 
 ```bash
-cd mysite        # carpeta que contiene manage.py
+# Crear entorno virtual
+python3 -m venv venv
+
+# Activar entorno (Linux/Mac)
+source venv/bin/activate
+
+# Activar entorno (Windows)
+venv\Scripts\activate
+
+# Instalar Django
+pip install django==4.1.0
+
+# Verificar versión
+python3 -m django --version
+
+# Instalar dependencias
+pip install -r requirements.txt
+````
+
+## Estructura del proyecto
+
+* `mysite/` → contenedor del proyecto:
+
+  * `manage.py` → utilidad de línea de comandos para interactuar con el proyecto.
+  * `mysite/` → paquete Python del proyecto:
+
+    * `__init__.py` → indica que es un módulo Python.
+    * `asgi.py` → configuración para ASGI (aplicaciones asíncronas).
+    * `settings.py` → configuración y ajustes del proyecto.
+    * `urls.py` → define las URLs principales.
+    * `wsgi.py` → configuración para WSGI (servidores de producción).
+
+## Settings principales (`settings.py`)
+
+* **DEBUG** → `True` en desarrollo, `False` en producción.
+* **ALLOWED\_HOSTS** → dominios permitidos cuando `DEBUG=False`.
+* **INSTALLED\_APPS** → apps activas (por defecto: admin, auth, sessions, messages, staticfiles).
+* **MIDDLEWARE** → lista de middleware ejecutados por request/respuesta.
+* **ROOT\_URLCONF** → módulo donde están las URLs raíz.
+* **DATABASES** → configuración de la base de datos (por defecto SQLite3).
+* **LANGUAGE\_CODE** → idioma por defecto.
+* **USE\_TZ** → soporte de zonas horarias.
+
+> 🔗 Documentación completa: [Django Settings](https://docs.djangoproject.com/en/4.1/ref/settings/)
+
+## Creación de una aplicación
+
+* Comando para crear la app `blog`:
+
+```bash
+python manage.py startapp blog
+```
+
+* Archivos generados:
+
+  * `__init__.py` → marca el directorio como paquete Python.
+  * `admin.py` → registrar modelos para admin.
+  * `apps.py` → configuración de la app.
+  * `migrations/` → migraciones de base de datos.
+  * `models.py` → definición de modelos.
+  * `views.py` → lógica y vistas.
+  * `tests.py` → pruebas unitarias.
+
+## Modelo `Post` (blog)
+
+* Representa las publicaciones del blog.
+* Campos:
+
+  * `title` → `CharField`, título del post.
+  * `slug` → `SlugField`, URL amigable para SEO (`django-reinhardt-legend-jazz`).
+  * `body` → `TextField`, contenido del post.
+* Método `__str__()` → devuelve una representación legible del objeto (se ve en admin).
+* Django agrega automáticamente un **primary key auto-incremental (`id`)**.
+
+**Ejemplo básico de modelo:**
+
+```python
+from django.db import models
+
+class Post(models.Model):
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=200)
+    body = models.TextField()
+
+    def __str__(self):
+        return self.title
+```
+
+* Proceso para reflejar cambios en la DB:
+
+```bash
+python manage.py makemigrations blog
 python manage.py migrate
 ```
 
-* Levantar servidor:
+* Cada modelo = tabla en la base de datos; cada campo = columna.
+* Correspondencia de tipos:
 
-```bash
-python manage.py runserver
-```
-
-* URL de desarrollo: `http://127.0.0.1:8000/`
-
----
-
-### 🔹 Verificar servidor de desarrollo y entornos
-
-* Abrir en el navegador:
-
-  ```
-  http://127.0.0.1:8000/
-  ```
-
-  * Deberías ver la **página por defecto de Django** indicando que el proyecto corre correctamente.
-  * Cada solicitud HTTP se registra en la consola, ejemplo:
-
-    ```
-    [01/Jan/2022 17:20:30] "GET / HTTP/1.1" 200 16351
-    ```
-
-* Ejecutar servidor con host/puerto y settings específicos:
-
-```bash
-python manage.py runserver 127.0.0.1:8001 --settings=mysite.settings
-```
-
-* Útil para distintos entornos (desarrollo, staging, etc.)
-
-* ⚠️ Nota de producción:
-
-  * `runserver` **solo es para desarrollo**, no para producción.
-  * Para producción usar:
-
-    * **WSGI** → Apache, Gunicorn, uWSGI
-    * **ASGI** → Daphne, Uvicorn
+| Campo | Tipo Django | Tipo SQL                |
+| ----- | ----------- | ----------------------- |
+| title | CharField   | VARCHAR                 |
+| slug  | SlugField   | VARCHAR                 |
+| body  | TextField   | TEXT                    |
+| id    | AutoField   | INT PK auto-incremental |
 
 ---
 
-### 📝 Mini nota para apuntes / README Cap 1
-
-* Ejecutar **manage.py** desde la carpeta correcta.
-* Revisar **migraciones pendientes**: `python manage.py migrate`.
-* Carpeta raíz del proyecto = contiene `manage.py`.
-* Carpeta `mysite/` dentro del proyecto = paquete Python con configuración (settings, urls, asgi/wsgi).
-* URLs activas por defecto:
-
-  * /admin/ → panel de administración
-  * /blog/ → app del blog
-* Cambiar host/puerto o settings:
-  python manage.py runserver 127.0.0.1:8001 --settings=mysite.settings
-* Servidor dev solo para pruebas; producción: usar WSGI o ASGI.
+```
+```
