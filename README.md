@@ -1,36 +1,28 @@
-# Proyecto Blog - Django 4
+# 📓 Apuntes de *Django for APIs*
 
-## Resumen del proyecto y entorno
+Voy guardando mis notas capítulo por capítulo.  
+No son explicaciones largas, solo lo esencial que necesito recordar.
 
-- Este proyecto utiliza **Django 4.x**, un framework web que sigue el patrón **MTV (Model-Template-View)**.
-- Django permite separar claramente las responsabilidades de cada capa:
-  - **Model**: maneja la base de datos.
-  - **Template**: define la presentación de los datos.
-  - **View**: controla la lógica y la interacción del usuario.
-- Filosofía principal: **DRY (Don't Repeat Yourself)** → máxima reutilización de código y desarrollo rápido gracias a Python.
-- Características nuevas de Django 4 que se pueden aprovechar:
-  - **Caching con Redis**: mejora el rendimiento almacenando datos temporales en memoria.
-  - **Scrypt password hasher**: almacenamiento seguro de contraseñas.
-  - **Renderizado de formularios con templates**: permite personalizar la apariencia de los formularios.
-  - **Soporte ASGI y ORM asíncrono**: vistas y consultas asíncronas para aplicaciones con alta concurrencia.
+---
 
-## Setup rápido (recordatorio)
+## ✨ Capítulo 1 – Blog con Django
 
-```bash
-# Crear entorno virtual
-python3 -m venv venv
+- Django = framework Python → rápido, seguro, pensado para proyectos grandes.  
+- Usaremos **DRF** (Django REST Framework) más adelante para APIs.  
 
-# Activar entorno (Linux/Mac)
-source venv/bin/activate
+### 🔧 Setup
+- Crear entorno virtual → `python -m venv .venv`  
+- Activar y `pip install django`  
+- Crear proyecto → `django-admin startproject config .`  
+- Crear app → `python manage.py startapp posts`
 
-# Activar entorno (Windows)
-venv\Scripts\activate
+### 📂 Estructura
+- `config/` → settings, urls, etc.  
+- `posts/` → nuestra app de blog.  
 
-# Instalar Django
-pip install django==4.1.0
-
-# Verificar versión
-python3 -m django --version
-
-# Instalar dependencias desde requirements.txt
-pip install -r requirements.txt
+### 📝 Modelo
+```python
+class Post(models.Model):
+    title = models.CharField(max_length=50)
+    body = models.TextField()
+    date = models.DateTimeField(auto_now_add=True)
