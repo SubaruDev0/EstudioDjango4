@@ -1,11 +1,11 @@
-{% extends "blog/base.html" %}
+{% extends "blog/base.html" %} <!-- Hereda la estructura de base.html -->
 
-{% block title %}{{ post.title }}{% endblock %}
+{% block title %}{{ post.title }}{% endblock %} <!-- Título dinámico según el post -->
 
 {% block content %}
-  <h1>{{ post.title }}</h1>
+  <h1>{{ post.title }}</h1> <!-- Título completo del post -->
   <p class="date">
-    Published {{ post.publish }} by {{ post.author }}
+    Published {{ post.publish }} by {{ post.author }} <!-- Fecha de publicación y autor -->
   </p>
-  {{ post.body|linebreaks }}
+  {{ post.body|linebreaks }} <!-- Contenido completo con saltos de línea respetados -->
 {% endblock %}
