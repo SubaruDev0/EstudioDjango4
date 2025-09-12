@@ -5,29 +5,37 @@ from django.contrib.auth.models import User
 # Manager personalizado → solo posts publicados
 class PublishedManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(status=Post.Status.PUBLISHED)
-
+        return super().get_queryset()\
+                      .filter(status=Post.Status.PUBLISHED)
+    
 class Post(models.Model):
     # Estado del post
+
     class Status(models.TextChoices):
         DRAFT = 'DF', 'Draft'
         PUBLISHED = 'PB', 'Published'
 
-    title = models.CharField(max_length=250)  # título
-    slug = models.SlugField(max_length=250)   # URL amigable
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blog_posts')
-    body = models.TextField()                  # contenido
-    publish = models.DateTimeField(default=timezone.now)  # fecha de publicación
-    created = models.DateTimeField(auto_now_add=True)     # fecha de creación
-    updated = models.DateTimeField(auto_now=True)         # fecha de actualización
-    status = models.CharField(max_length=2, choices=Status.choices, default=Status.DRAFT)
+    title = models.CharField(max_length=250) # título
+    slug = models.SlugField(max_length=250) # URL amigable
+    author = models.ForeignKey(User,
+                               on_delete=models.CASCADE,
+                               related_name='blog_posts')
+    body = models.TextField() # Contenido
+    publish = models.DateTimeField(default=timezone.now) # fecha de publicación
+    created = models.DateTimeField(auto_now_add=True) # fecha de creación
+    updated = models.DateTimeField(auto_now=True) # fecha de actualización
+    status = models.CharField(max_length=2,
+                              choices=Status.choices,
+                              default=Status.DRAFT)
 
-    objects = models.Manager()      # manager por defecto
-    published = PublishedManager()  # manager personalizado
+    objects = models.Manager() # manager por defecto
+    published = PublishedManager() # manager personalizado
 
     class Meta:
-        ordering = ['-publish']             # orden descendente
-        indexes = [models.Index(fields=['-publish'])]  # índice en publish
+        ordering = ['-publish'] # orden descendente
+        indexes = [
+            models.Index(fields=['-publish']), # índice en publish
+        ]
 
     def __str__(self):
         return self.title

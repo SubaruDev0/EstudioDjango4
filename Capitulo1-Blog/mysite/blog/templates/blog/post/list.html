@@ -1,18 +1,18 @@
-{% extends "blog/base.html" %} <!-- Hereda de base.html para mantener estructura -->
+{% extends "blog/base.html" %}
 
-{% block title %}My Blog{% endblock %} <!-- Define el título de la página -->
+{% block title %}My Blog{% endblock %}
 
 {% block content %}
   <h1>My Blog</h1>
-  {% for post in posts %} <!-- Recorre todos los posts pasados desde la view -->
+  {% for post in posts %}
     <h2>
-      <a href="{% url 'blog:post_detail' post.id %}"> <!-- Link al detalle del post usando su ID -->
-        {{ post.title }} <!-- Título del post -->
+      <a href="{% url 'blog:post_detail' post.id %}">
+        {{ post.title }}
       </a>
     </h2>
     <p class="date">
-      Published {{ post.publish }} by {{ post.author }} <!-- Fecha de publicación y autor -->
+      Published {{ post.publish }} by {{ post.author }}
     </p>
-    {{ post.body|truncatewords:30|linebreaks }} <!-- Muestra resumen de 30 palabras y conserva saltos de línea -->
+    {{ post.body|truncatewords:30|linebreaks }}
   {% endfor %}
 {% endblock %}
