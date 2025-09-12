@@ -1,3 +1,5 @@
+# Proyecto Blog - Django 4
+
 ## Resumen del proyecto y entorno
 
 - Este proyecto utiliza **Django 4.x**, un framework web que sigue el patrón **MTV (Model-Template-View)**.
@@ -11,6 +13,21 @@
   - **Scrypt password hasher**: almacenamiento seguro de contraseñas.
   - **Renderizado de formularios con templates**: permite personalizar la apariencia de los formularios.
   - **Soporte ASGI y ORM asíncrono**: vistas y consultas asíncronas para aplicaciones con alta concurrencia.
-- Instalación de dependencias:
-  ```bash
-  pip install -r requirements.txt
+
+## Setup rápido (recordatorio)
+
+```bash
+# Crear entorno virtual
+python3 -m venv venv
+
+# Activar entorno (Linux/Mac)
+source venv/bin/activate
+
+# Activar entorno (Windows)
+venv\Scripts\activate
+
+# Instalar Django
+pip install django==4.1.0
+
+# Verificar versión
+python3 -m django --version
