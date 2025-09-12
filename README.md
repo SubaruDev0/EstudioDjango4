@@ -1,10 +1,6 @@
 
 ---
 
-#Perfecto, puedo integrar ese estilo explicativo en tu README del Capítulo 1, manteniendo todo claro, resumido y didáctico, sin saturar con demasiado código. Aquí te dejo la versión revisada:
-
----
-
 # Proyecto Blog - Django 4 (Capítulo 1)
 
 ## Resumen del proyecto y entorno
