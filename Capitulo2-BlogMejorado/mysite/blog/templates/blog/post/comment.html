@@ -1,0 +1,20 @@
+<h2>Comentarios</h2>
+{% for comment in comments %}
+    <p><strong>{{ comment.name }}</strong> dijo:</p>
+    <p>{{ comment.body }}</p>
+    <hr>
+{% empty %}
+    <p>No hay comentarios aún.</p>
+{% endfor %}
+
+{% if comment_submitted %}
+    <h2>¡Has añadido un comentario correctamente!</h2>
+    <p><a href="{{ post.get_absolute_url }}">Volver al post</a></p>
+{% else %}
+    <h2>Añadir un comentario</h2>
+    <form action="{% url 'blog:post_comment' post.id %}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Añadir comentario">
+    </form>
+{% endif %}

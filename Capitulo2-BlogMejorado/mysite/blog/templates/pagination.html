@@ -1,0 +1,16 @@
+<!-- templates/pagination.html REUTILIZABLE -->
+<div class="pagination"> <!-- Elementos de paginación. -->
+  <span class="step-links"> <!-- Enlaces de navegación (anterior/siguiente). -->
+    {% if page.has_previous %} <!-- Verifica si hay una página anterior disponible. -->
+      <a href="?page={{ page.previous_page_number }}">Anterior</a> <!-- Si hay, muestra un enlace a la página anterior. -->
+    {% endif %}
+
+    <span class="current"> <!-- Muestra la información de la página actual. -->
+      Page {{ page.number }} of {{ page.paginator.num_pages }}. <!-- Muestra el número de página actual y el total de páginas. -->
+    </span>
+
+    {% if page.has_next %} <!-- Verifica si hay una página siguiente disponible. -->
+      <a href="?page={{ page.next_page_number }}">Siguiente</a> <!-- Si hay, muestra un enlace a la página siguiente. -->
+    {% endif %}
+  </span>
+</div>

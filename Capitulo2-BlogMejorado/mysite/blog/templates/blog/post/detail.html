@@ -1,0 +1,38 @@
+{% extends "blog/base.html" %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+<article>
+    <h1>{{ post.title }}</h1>
+    <p class="date">
+        Publicado hace <time datetime="{{ post.publish|date:"Y-m-d" }}">{{ post.publish|timesince }}</time>
+        por {{ post.author }}
+    </p>
+    <div>
+        {{ post.body|linebreaks }}
+    </div>
+</article>
+
+<p>
+    <a href="{% url 'blog:post_list' %}">Volver a la lista de posts</a>
+</p>
+
+<h2>Comentarios</h2>
+{% for comment in comments %}
+    <div>
+        <p><strong>{{ comment.name }}</strong> dijo:</p>
+        <p>{{ comment.body|linebreaks }}</p>
+        <p><small>Publicado {{ comment.created|timesince }} atrás</small></p>
+    </div>
+{% empty %}
+    <p>No hay comentarios aún.</p>
+{% endfor %}
+
+<h2>Añade un comentario</h2>
+<form action="{% url 'blog:post_comment' post.id %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <p><input type="submit" value="Añade un comentario"></p>
+</form>
+{% endblock %}

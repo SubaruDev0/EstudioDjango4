@@ -1,0 +1,164 @@
+/*
+ * --------------------------------
+ * Variables y Resets
+ * --------------------------------
+ */
+:root {
+    /* Paleta de colores */
+    --color-primary: #ff00fb; /* Magenta vivo */
+    --color-secondary: #ff00a6; /* Rosa oscuro */
+    --color-text-main: #333;
+    --color-text-light: #666;
+    --color-border: #bbb;
+    --color-background-light: #efefef;
+
+    /* Tipografía */
+    --font-stack-main: "Cascadia Code PL", Consolas, "Courier New", monospace;
+    --font-stack-secondary: Georgia, serif;
+}
+
+/* El universal selector ayuda a normalizar el modelo de caja */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-stack-main);
+    color: var(--color-text-main);
+}
+
+a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+/*
+ * --------------------------------
+ * Encabezados y Párrafos
+ * --------------------------------
+ */
+h1 {
+    font-weight: normal;
+    border-bottom: 1px solid var(--color-border);
+    padding: 0 0 10px 0;
+}
+
+h2 {
+    font-weight: normal;
+    margin: 30px 0 0;
+}
+
+p.date {
+    color: var(--color-text-light);
+    font-family: var(--font-stack-secondary);
+    font-size: 12px;
+    font-style: italic;
+}
+
+/*
+ * --------------------------------
+ * Layout principal
+ * --------------------------------
+ */
+.container {
+    overflow: hidden; /* Limpia los floats */
+}
+
+#content {
+    float: left;
+    width: 60%;
+    padding: 0 0 0 30px;
+}
+
+#sidebar {
+    float: right;
+    width: 30%;
+    padding: 10px;
+    background: var(--color-background-light);
+}
+
+/*
+ * --------------------------------
+ * Estilos de paginación
+ * --------------------------------
+ */
+.pagination {
+    margin: 40px 0;
+    font-weight: bold;
+}
+
+/*
+ * --------------------------------
+ * Estilos para formularios
+ * --------------------------------
+ */
+label {
+    display: block; /* Usa display block para un mejor control */
+    clear: both;
+    color: var(--color-text-main);
+    margin-bottom: 4px;
+}
+
+input[type="text"],
+input[type="email"],
+textarea {
+    width: 100%; /* Ocupa todo el ancho disponible */
+    margin: 0 0 10px;
+    background: var(--color-background-light);
+    border: 0;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-family: inherit; /* Hereda la fuente del body */
+}
+
+input[type=submit] {
+    font-weight: bold;
+    background: var(--color-secondary);
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 14px;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+}
+
+.errorlist {
+    color: #cc0033;
+    float: left;
+    clear: both;
+    padding-left: 10px;
+}
+
+/*
+ * --------------------------------
+ * Estilos para comentarios
+ * --------------------------------
+ */
+.comment {
+    padding: 10px;
+}
+
+.comment:nth-child(even) {
+    background: var(--color-background-light);
+}
+
+.comment .info {
+    font-weight: bold;
+    font-size: 12px;
+    color: var(--color-text-light);
+}
+
+/*
+ * --------------------------------
+ * Media query para móviles
+ * --------------------------------
+ */
+@media (max-width: 768px) {
+    #content, #sidebar {
+        float: none;
+        width: 100%;
+        padding: 10px;
+    }
+}
