@@ -187,11 +187,6 @@ python manage.py migrate
 > El resto de archivos generados (`apps.py`, `tests.py`, `migrations/`) son soporte o para futuras pruebas/migraciones.
 
 ---
-Perfecto, Javier. Revisando lo que me compartiste y comparando con lo que se suele cubrir en ese capítulo del libro de Django 4 (Blog Mejorado, capítulo 2), efectivamente se tratan básicamente los temas que ya resumí: URLs canónicas, paginación, manejo de errores y Class-Based Views.
-
-Lo que sí podría agregarse para darle un poco más de contexto y que quede consistente con tu Capítulo 1:
-
----
 
 ---
 
