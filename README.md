@@ -444,6 +444,352 @@ urlpatterns = [
 Forms  →  Settings  →  Views  →  URLs  →  Templates
 ```
 
+# Proyecto Blog Mejorado - Django 4 (Capítulo 3)
+
+## Introducción
+
+Este capítulo amplía el blog agregando funcionalidades avanzadas que son esenciales para cualquier proyecto serio en Django:
+
+* **Etiquetas en posts** (`django-taggit`) para clasificar contenido.
+* **Posts similares** basados en tags, para mejorar navegación y SEO.
+* **Filtros y template tags personalizados** (ej. Markdown, últimas publicaciones).
+* **Feeds RSS y Sitemap** para SEO y sindicación.
+* **Búsquedas** en títulos y contenido.
+* **Uso de PostgreSQL** para bases de datos más robustas.
+* **Exportación/importación de datos** con `dumpdata` y `loaddata`.
+
+El objetivo es que cualquier persona pueda **replicar el blog completo paso a paso** y entender cómo funciona cada pieza.
+
+---
+
+## 1. Tags con `django-taggit`
+
+### ¿Qué hace?
+
+Permite asignar **múltiples etiquetas** a cada post y luego **filtrar posts por tag**. Es más flexible que un campo de texto y ya viene con consultas optimizadas.
+
+### Instalación
+
+```bash
+pip install django-taggit
+```
+
+Agregar a `INSTALLED_APPS` en `settings.py`:
+
+```python
+INSTALLED_APPS = [
+    ...
+    'taggit',  # app de tags
+    'blog',    # nuestra app de blog
+]
+```
+
+### Modelo `Post` actualizado
+
+```python
+from taggit.managers import TaggableManager
+
+class Post(models.Model):
+    title = models.CharField(max_length=250)
+    slug = models.SlugField(max_length=250, unique_for_date='publish')
+    body = models.TextField()
+    # Campo de tags
+    tags = TaggableManager()  # permite asignar múltiples tags a un post
+```
+
+> Cada post ahora puede tener cero o más tags. `django-taggit` crea tablas adicionales automáticamente para relacionar posts y tags.
+
+### Migraciones
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+---
+
+### Uso en el shell de Django
+
+```python
+from blog.models import Post
+
+# Obtenemos un post
+post = Post.objects.get(id=5)
+
+# Agregamos tags
+post.tags.add('music', 'django', 'jazz')
+
+# Revisamos tags asignados
+post.tags.all()  # <QuerySet [<Tag: music>, <Tag: django>, <Tag: jazz>]>
+
+# Eliminamos un tag
+post.tags.remove('django')
+```
+
+> Esto permite probar que los tags funcionan correctamente antes de integrarlos en templates y vistas.
+
+---
+
+## 2. Mostrar tags en templates
+
+### Ejemplo en `list.html` o `detail.html`
+
+```django
+<p class="tags">
+  Tags:
+  {% for t in post.tags.all %}
+    <a href="{% url 'blog:post_list_by_tag' t.slug %}">{{ t.name }}</a>
+    {% if not forloop.last %}, {% endif %}
+  {% empty %}
+    <span>Sin tags</span>
+  {% endfor %}
+</p>
+```
+
+> Explicación:
+>
+> * `post.tags.all` → obtiene todos los tags de un post.
+> * `forloop.last` → evita poner coma al final.
+> * `{% empty %}` → caso cuando el post no tiene tags.
+
+### Filtrado de posts por tag (views.py)
+
+```python
+from taggit.models import Tag
+from django.shortcuts import get_object_or_404
+
+def post_list(request, tag_slug=None):
+    post_list = Post.published.all()  # todos los posts publicados
+    tag = None
+
+    if tag_slug:
+        tag = get_object_or_404(Tag, slug=tag_slug)
+        # Filtramos posts que tengan el tag seleccionado
+        post_list = post_list.filter(tags__in=[tag])
+
+    # Paginación (3 posts por página)
+    paginator = Paginator(post_list, 3)
+    page_number = request.GET.get('page', 1)
+    posts = paginator.get_page(page_number)
+
+    return render(request, 'blog/post/list.html', {'posts': posts, 'tag': tag})
+```
+
+### URL correspondiente
+
+```python
+path('tag/<slug:tag_slug>/', views.post_list, name='post_list_by_tag'),
+```
+
+> Ahora al hacer clic en un tag, veremos solo los posts relacionados.
+
+---
+
+## 3. Posts similares
+
+### ¿Qué hace?
+
+Sugiere posts que **comparten tags** con el post actual, mejorando la navegación y el tiempo de permanencia del usuario.
+
+```python
+from django.db.models import Count
+
+def get_similar_posts(post):
+    # Obtenemos los IDs de los tags del post
+    post_tags_ids = post.tags.values_list('id', flat=True)
+    # Filtramos otros posts con esos tags, excluyendo el post actual
+    similar_posts = Post.published.filter(tags__in=post_tags_ids).exclude(id=post.id)
+    # Ordenamos por cantidad de tags en común y fecha
+    similar_posts = similar_posts.annotate(same_tags=Count('tags')).order_by('-same_tags','-publish')[:4]
+    return similar_posts
+```
+
+### Template con Inclusion Tag
+
+```django
+{% load blog_extras %}
+{% show_similar_posts post 4 %}
+```
+
+> `show_similar_posts` es un **template tag personalizado** que recibe un post y un límite de resultados.
+
+---
+
+## 4. Custom template tags y filtros
+
+### a) Filtro Markdown
+
+```python
+# blog/templatetags/blog_extras.py
+from django import template
+import markdown
+
+register = template.Library()
+
+@register.filter(name='markdown')
+def markdown_format(text):
+    """Convierte Markdown a HTML"""
+    return markdown.markdown(text)
+```
+
+Uso:
+
+```django
+{{ post.body|markdown }}
+```
+
+> Permite escribir posts en **Markdown** y que se rendericen como HTML.
+
+### b) Inclusion Tag (ej. últimos posts)
+
+```python
+@register.inclusion_tag('blog/post/latest_posts.html')
+def show_latest_posts(count=5):
+    latest = Post.published.all()[:count]
+    return {'latest_posts': latest}
+```
+
+Uso:
+
+```django
+{% load blog_extras %}
+{% show_latest_posts 3 %}
+```
+
+> Esto es útil para **sidebars o widgets** en la web.
+
+---
+
+## 5. Feeds RSS y Sitemap
+
+### a) Feeds
+
+```python
+from django.contrib.syndication.views import Feed
+from .models import Post
+
+class LatestPostsFeed(Feed):
+    title = "Mi Blog"
+    link = "/"
+    description = "Últimos posts publicados"
+
+    def items(self):
+        return Post.published.all()[:5]
+
+    def item_title(self, item):
+        return item.title
+
+    def item_description(self, item):
+        return item.body
+```
+
+URL:
+
+```python
+path('feed/', LatestPostsFeed(), name='post_feed'),
+```
+
+### b) Sitemap
+
+```python
+from django.contrib.sitemaps import Sitemap
+from .models import Post
+
+class PostSitemap(Sitemap):
+    changefreq = "daily"
+    priority = 0.9
+
+    def items(self):
+        return Post.published.all()
+
+    def lastmod(self, obj):
+        return obj.publish
+```
+
+URL:
+
+```python
+from django.contrib.sitemaps.views import sitemap
+from blog.sitemaps import PostSitemap
+
+sitemaps = {'posts': PostSitemap()}
+path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
+```
+
+---
+
+## 6. Búsquedas de posts
+
+```python
+def post_search(request):
+    query = request.GET.get('query', '')
+    results = Post.published.filter(title__icontains=query) | Post.published.filter(body__icontains=query)
+    return render(request, 'blog/post/search.html', {'results': results, 'query': query})
+```
+
+Template:
+
+```django
+<form method="get" action="{% url 'blog:post_search' %}">
+  <input type="text" name="query" placeholder="Buscar...">
+  <button type="submit">Buscar</button>
+</form>
+```
+
+---
+
+## 7. PostgreSQL en Django
+
+Instalación:
+
+```bash
+pip install psycopg2
+```
+
+Configuración `settings.py`:
+
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mi_bd',
+        'USER': 'mi_usuario',
+        'PASSWORD': 'mi_pass',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
+```
+
+> Más robusto que SQLite, ideal para producción y búsquedas avanzadas.
+
+---
+
+## 8. Exportación e importación de datos
+
+```bash
+python manage.py dumpdata blog > blog.json  # exportar
+python manage.py loaddata blog.json         # importar
+```
+
+---
+
+## 9. Flujo completo integrado
+
+```
+Model (Post, Comment, Tags)
+        ↓
+Views (list, detail, share, comment, search, similar)
+        ↓
+Forms (EmailPostForm, CommentForm)
+        ↓
+Templates (list.html, detail.html, comment_form.html, latest_posts.html)
+        ↓
+URLs (blog/urls.py + mysite/urls.py)
+        ↓
+Extras: Feeds, Sitemap, Búsqueda, PostgreSQL
+```
+
 > Este flujo refleja la recomendación del libro: primero definir **qué queremos hacer**, luego asegurar que el **entorno está listo**, después implementar **la lógica**, conectar con **URLs** y finalmente presentar la información al usuario en **templates**.
 
 ---
