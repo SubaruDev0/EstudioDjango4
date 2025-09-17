@@ -41,6 +41,10 @@ python3 -m django --version
 
 # Instalar dependencias
 pip install -r requirements.txt
+
+#Iniciar proyecto
+django-admin startproject MiProyecto .
+
 ```
 
 ---
