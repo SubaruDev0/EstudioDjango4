@@ -798,3 +798,401 @@ Extras: Feeds, Sitemap, Búsqueda, PostgreSQL
 
 ---
 
+# Capítulo 4 – Construyendo un sitio social con Django
+
+En este capítulo aprenderás a:
+
+* Manejar la **autenticación** de Django (login, logout, cambio y reset de contraseña).
+* Crear un sistema de **registro de usuarios**.
+* Extender el modelo de usuario con un **perfil**.
+* Permitir la **edición de perfiles** (incluyendo foto).
+* Implementar un **backend de autenticación por email**.
+* Usar el **sistema de mensajes** para feedback.
+
+---
+
+## 1. Configuración inicial
+
+### App `account`
+
+Crea la aplicación:
+
+```bash
+python manage.py startapp account
+```
+
+En `settings.py`:
+
+```python
+INSTALLED_APPS = [
+    ...
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'account',
+]
+
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+```
+
+En `urls.py` principal:
+
+```python
+from django.conf import settings
+from django.conf.urls.static import static
+from django.urls import path, include
+
+urlpatterns = [
+    path('account/', include('account.urls')),
+    path('account/', include('django.contrib.auth.urls')),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+```
+
+Estructura de carpetas:
+
+```
+project/
+├── account/
+│   ├── migrations/
+│   ├── templates/
+│   │   ├── account/
+│   │   └── registration/
+│   └── static/
+│       └── css/
+└── media/   # aquí se guardan fotos de perfiles
+```
+
+---
+
+## 2. Dashboard
+
+En `account/views.py`:
+
+```python
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def dashboard(request):
+    return render(request, 'account/dashboard.html')
+```
+
+En `account/urls.py`:
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.dashboard, name='dashboard'),
+]
+```
+
+Template `templates/account/dashboard.html`:
+
+```django
+{% extends "base.html" %}
+
+{% block title %}Panel de usuario{% endblock %}
+
+{% block content %}
+  <h1>Bienvenido {{ request.user.first_name }}</h1>
+  <p>Puedes editar tu perfil o cerrar sesión.</p>
+{% endblock %}
+```
+
+---
+
+## 3. Registro de usuarios
+
+### Formulario en `account/forms.py`
+
+```python
+from django import forms
+from django.contrib.auth.models import User
+
+class UserRegistrationForm(forms.ModelForm):
+    password = forms.CharField(label='Contraseña', widget=forms.PasswordInput)
+    password2 = forms.CharField(label='Repite la contraseña', widget=forms.PasswordInput)
+
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'email')
+
+    def clean_password2(self):
+        cd = self.cleaned_data
+        if cd['password'] != cd['password2']:
+            raise forms.ValidationError("Las contraseñas no coinciden")
+        return cd['password2']
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("Este email ya está registrado")
+        return email
+```
+
+### Vista en `account/views.py`
+
+```python
+from django.contrib import messages
+from .forms import UserRegistrationForm
+
+def register(request):
+    if request.method == 'POST':
+        user_form = UserRegistrationForm(request.POST)
+        if user_form.is_valid():
+            new_user = user_form.save(commit=False)
+            new_user.set_password(user_form.cleaned_data['password'])
+            new_user.save()
+            Profile.objects.create(user=new_user)
+            messages.success(request, 'Usuario registrado con éxito')
+            return render(request, 'account/register_done.html', {'new_user': new_user})
+    else:
+        user_form = UserRegistrationForm()
+    return render(request, 'account/register.html', {'user_form': user_form})
+```
+
+### Templates
+
+`templates/account/register.html`:
+
+```django
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Registro</h1>
+  <form method="post">
+    {{ user_form.as_p }}
+    {% csrf_token %}
+    <button type="submit">Registrar</button>
+  </form>
+{% endblock %}
+```
+
+`templates/account/register_done.html`:
+
+```django
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Registro completado</h1>
+  <p>Bienvenido, {{ new_user.first_name }}. Ya puedes iniciar sesión.</p>
+{% endblock %}
+```
+
+---
+
+## 4. Modelo Profile
+
+En `account/models.py`:
+
+```python
+from django.db import models
+from django.conf import settings
+
+class Profile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    date_of_birth = models.DateField(blank=True, null=True)
+    photo = models.ImageField(upload_to='users/%Y/%m/%d/', blank=True)
+
+    def __str__(self):
+        return f'Perfil de {self.user.username}'
+```
+
+Conectamos con señales en `account/models.py`:
+
+```python
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_or_update_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+    else:
+        instance.profile.save()
+```
+
+Migraciones:
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+---
+
+## 5. Editar perfil
+
+En `account/forms.py`:
+
+```python
+from .models import Profile
+
+class UserEditForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ('first_name', 'last_name', 'email')
+
+class ProfileEditForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ('date_of_birth', 'photo')
+```
+
+En `account/views.py`:
+
+```python
+from .forms import UserEditForm, ProfileEditForm
+
+@login_required
+def edit(request):
+    if request.method == 'POST':
+        user_form = UserEditForm(instance=request.user, data=request.POST)
+        profile_form = ProfileEditForm(instance=request.user.profile,
+                                       data=request.POST,
+                                       files=request.FILES)
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, 'Perfil actualizado con éxito')
+        else:
+            messages.error(request, 'Error al actualizar el perfil')
+    else:
+        user_form = UserEditForm(instance=request.user)
+        profile_form = ProfileEditForm(instance=request.user.profile)
+    return render(request, 'account/edit.html', {
+        'user_form': user_form,
+        'profile_form': profile_form
+    })
+```
+
+En `account/urls.py`:
+
+```python
+path('edit/', views.edit, name='edit'),
+```
+
+Template `templates/account/edit.html`:
+
+```django
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Editar perfil</h1>
+  <form method="post" enctype="multipart/form-data">
+    {{ user_form.as_p }}
+    {{ profile_form.as_p }}
+    {% csrf_token %}
+    <button type="submit">Guardar cambios</button>
+  </form>
+{% endblock %}
+```
+
+---
+
+## 6. Backend de autenticación con email
+
+En `account/authentication.py`:
+
+```python
+from django.contrib.auth.models import User
+
+class EmailAuthBackend:
+    def authenticate(self, request, username=None, password=None):
+        try:
+            user = User.objects.get(email=username)
+            if user.check_password(password):
+                return user
+            return None
+        except User.DoesNotExist:
+            return None
+
+    def get_user(self, user_id):
+        try:
+            return User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return None
+```
+
+En `settings.py`:
+
+```python
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'account.authentication.EmailAuthBackend',
+]
+```
+
+---
+
+## 7. Plantillas de autenticación
+
+Django provee las rutas, solo debes añadir los templates en `templates/registration/`:
+
+* `login.html`
+* `logged_out.html`
+* `password_change_form.html`
+* `password_change_done.html`
+* `password_reset_form.html`
+* `password_reset_done.html`
+* `password_reset_confirm.html`
+* `password_reset_complete.html`
+
+Ejemplo de `login.html`:
+
+```django
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Iniciar sesión</h1>
+  <form method="post">
+    {{ form.as_p }}
+    {% csrf_token %}
+    <button type="submit">Entrar</button>
+  </form>
+{% endblock %}
+```
+
+---
+
+## 8. Mensajes al usuario
+
+En tu `base.html` agrega:
+
+```django
+{% if messages %}
+  <ul class="messages">
+    {% for message in messages %}
+      <li class="{{ message.tags }}">{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+```
+
+Esto mostrará los mensajes `success`, `error`, etc. generados en las vistas.
+
+---
+
+## 9. Resumen del flujo
+
+1. El usuario puede **registrarse** con un formulario propio.
+2. Se crea automáticamente un **perfil** vinculado al usuario.
+3. Puede iniciar sesión con **username o email**.
+4. Accede al **dashboard**, protegido con `@login_required`.
+5. Puede **editar su perfil**, incluyendo foto de perfil.
+6. Puede cambiar o resetear su contraseña.
+7. Recibe feedback gracias al sistema de **mensajes**.
+
+---
+
